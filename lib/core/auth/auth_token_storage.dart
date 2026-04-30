@@ -1,42 +1,36 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-final authTokenStorageProvider = Provider<AuthTokenStorage>((ref) {
-  return AuthTokenStorage();
-});
+final authTokenStorageProvider = Provider<AuthTokenStorage>((_) => AuthTokenStorage());
 
+/// Persistência local da sessão (MVP: sem expiração, usuário fica logado até logout).
 class AuthTokenStorage {
   final _storage = const FlutterSecureStorage();
 
-  static const _accessKey = 'sydle_access_token';
-  static const _refreshKey = 'sydle_refresh_token';
-  static const _userIdKey = 'sydle_user_id';
+  static const _keyUsername = 'session_username';
+  static const _keyUserId = 'session_user_id';
+  static const _keyDisplayName = 'session_display_name';
 
-  Future<void> save({
-    required String accessToken,
-    required String refreshToken,
-    required String userId,
+  Future<void> saveSession({
+    required String username,
+    String? userId,
+    String? displayName,
   }) async {
     await Future.wait([
-      _storage.write(key: _accessKey, value: accessToken),
-      _storage.write(key: _refreshKey, value: refreshToken),
-      _storage.write(key: _userIdKey, value: userId),
+      _storage.write(key: _keyUsername, value: username),
+      if (userId != null) _storage.write(key: _keyUserId, value: userId),
+      if (displayName != null) _storage.write(key: _keyDisplayName, value: displayName),
     ]);
   }
 
-  Future<bool> hasToken() async {
-    final token = await _storage.read(key: _accessKey);
-    return token != null;
+  Future<bool> hasSession() async {
+    final v = await _storage.read(key: _keyUsername);
+    return v != null && v.isNotEmpty;
   }
 
-  Future<String?> getAccessToken() => _storage.read(key: _accessKey);
-  Future<String?> getUserId() => _storage.read(key: _userIdKey);
+  Future<String?> getUsername() => _storage.read(key: _keyUsername);
+  Future<String?> getUserId() => _storage.read(key: _keyUserId);
+  Future<String?> getDisplayName() => _storage.read(key: _keyDisplayName);
 
-  Future<void> clear() async {
-    await Future.wait([
-      _storage.delete(key: _accessKey),
-      _storage.delete(key: _refreshKey),
-      _storage.delete(key: _userIdKey),
-    ]);
-  }
+  Future<void> clear() => _storage.deleteAll();
 }

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/auth_repository.dart';
+import '../../../core/error/sydle_exception.dart';
 import 'auth_model.dart';
 
 final authStateProvider =
@@ -8,17 +9,16 @@ final authStateProvider =
 class AuthNotifier extends AsyncNotifier<AuthState> {
   @override
   Future<AuthState> build() async {
-    final repo = ref.read(authRepositoryProvider);
-    final hasToken = await repo.isLoggedIn();
-    return AuthState(isAuthenticated: hasToken);
+    final user = await ref.read(authRepositoryProvider).restoreSession();
+    return AuthState(isAuthenticated: user != null, user: user);
   }
 
-  Future<void> login({required String email, required String password}) async {
+  Future<void> login({required String username, required String password}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final user = await ref
           .read(authRepositoryProvider)
-          .login(email: email, password: password);
+          .login(username: username, password: password);
       return AuthState(isAuthenticated: true, user: user);
     });
   }
@@ -27,9 +27,21 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncData(AuthState(isAuthenticated: false));
   }
+
+  /// Chama após login para atualizar nome/role vindos do perfil SYDLE.
+  void updateUser(AuthUser user) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    state = AsyncData(AuthState(isAuthenticated: true, user: user));
+  }
+
+  bool get hasError => state.hasError;
+  SydleAuthException? get authError {
+    final err = state.error;
+    return err is SydleAuthException ? err : null;
+  }
 }
 
-// Conveniência
 final currentUserProvider = Provider<AuthUser?>((ref) {
   return ref.watch(authStateProvider).valueOrNull?.user;
 });

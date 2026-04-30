@@ -12,27 +12,28 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
+  final _userCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
   bool _obscure = true;
 
   @override
   void dispose() {
-    _emailCtrl.dispose();
-    _passwordCtrl.dispose();
+    _userCtrl.dispose();
+    _passCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     await ref.read(authStateProvider.notifier).login(
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text,
+          username: _userCtrl.text.trim(),
+          password: _passCtrl.text,
         );
-    if (ref.read(authStateProvider).hasError && mounted) {
+    final notifier = ref.read(authStateProvider.notifier);
+    if (notifier.hasError && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('E-mail ou senha inválidos.'),
+        SnackBar(
+          content: Text(notifier.authError?.message ?? 'Usuário ou senha inválidos.'),
           backgroundColor: AppColors.statusBehind,
         ),
       );
@@ -52,7 +53,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Logo / título
                 const SizedBox(height: 16),
                 const Text(
                   'DGT',
@@ -69,8 +69,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
                 const SizedBox(height: 48),
-
-                // Card do formulário
                 Card(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -93,18 +91,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           const SizedBox(height: 24),
                           TextFormField(
-                            controller: _emailCtrl,
-                            keyboardType: TextInputType.emailAddress,
+                            controller: _userCtrl,
+                            keyboardType: TextInputType.text,
+                            autocorrect: false,
                             decoration: const InputDecoration(
-                              labelText: 'E-mail corporativo',
-                              prefixIcon: Icon(Icons.email_outlined),
+                              labelText: 'Usuário',
+                              prefixIcon: Icon(Icons.person_outline),
                             ),
                             validator: (v) =>
-                                v == null || !v.contains('@') ? 'E-mail inválido' : null,
+                                v == null || v.trim().isEmpty ? 'Obrigatório' : null,
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
-                            controller: _passwordCtrl,
+                            controller: _passCtrl,
                             obscureText: _obscure,
                             decoration: InputDecoration(
                               labelText: 'Senha',
@@ -117,7 +116,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                             validator: (v) =>
-                                v == null || v.length < 6 ? 'Senha muito curta' : null,
+                                v == null || v.isEmpty ? 'Obrigatório' : null,
                           ),
                           const SizedBox(height: 28),
                           SizedBox(
