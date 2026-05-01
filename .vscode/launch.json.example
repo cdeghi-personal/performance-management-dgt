@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Performance DGT (dev)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "--dart-define=SYDLE_ORG=<organizacao>.sydle.one",
+        "--dart-define=SYDLE_AUTH_TOKEN=Basic <base64_usuario:senha>"
+      ]
+    }
+  ]
+}

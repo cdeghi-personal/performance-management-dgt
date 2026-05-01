@@ -34,7 +34,7 @@ ios/Runner/GeneratedPluginRegistrant.m
 
 # IDEs
 .idea/
-.vscode/
+.vscode/launch.json
 *.swp
 *.swo
 
