@@ -1,39 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/app_colors.dart';
+import '../../features/auth/domain/auth_provider.dart';
 
-class MainShell extends StatelessWidget {
+class MainShell extends ConsumerWidget {
   final Widget child;
   const MainShell({super.key, required this.child});
 
-  static const _tabs = [
-    _Tab(icon: Icons.dashboard_outlined, label: 'Início', path: '/dashboard'),
-    _Tab(icon: Icons.flag_outlined, label: 'Metas', path: '/goals'),
-    _Tab(icon: Icons.assessment_outlined, label: 'Avaliações', path: '/evaluations'),
-    _Tab(icon: Icons.forum_outlined, label: 'Feedbacks', path: '/feedback'),
-    _Tab(icon: Icons.more_horiz, label: 'Mais', path: '/meetings'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isManager = ref.watch(isManagerProvider);
     final location = GoRouterState.of(context).matchedLocation;
-    final currentIndex = _tabs.indexWhere((t) => location.startsWith(t.path));
+
+    final tabs = _buildTabs(isManager);
+    final currentIndex = _indexFor(location, tabs);
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex < 0 ? 0 : currentIndex,
-        onDestinationSelected: (i) => context.go(_tabs[i].path),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (i) => context.go(tabs[i].path),
+        type: BottomNavigationBarType.fixed,
         backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primary.withOpacity(0.12),
-        destinations: _tabs
-            .map((t) => NavigationDestination(
-                  icon: Icon(t.icon),
-                  label: t.label,
-                ))
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.midGray,
+        selectedFontSize: 10,
+        unselectedFontSize: 10,
+        elevation: 8,
+        items: tabs
+            .map((t) => BottomNavigationBarItem(icon: Icon(t.icon), label: t.label))
             .toList(),
       ),
     );
+  }
+
+  static List<_Tab> _buildTabs(bool isManager) => [
+        const _Tab(icon: Icons.grid_view_rounded, label: 'Home', path: '/dashboard'),
+        const _Tab(icon: Icons.checklist_rounded, label: 'Avaliações', path: '/avaliacoes'),
+        const _Tab(icon: Icons.track_changes_rounded, label: 'Metas', path: '/metas'),
+        if (isManager)
+          const _Tab(icon: Icons.balance_rounded, label: 'Equalização', path: '/avaliacoes/equalizacao'),
+        const _Tab(icon: Icons.person_outline_rounded, label: 'Perfil', path: '/perfil'),
+      ];
+
+  static int _indexFor(String location, List<_Tab> tabs) {
+    // Use longest matching prefix to avoid '/avaliacoes' shadowing '/avaliacoes/equalizacao'.
+    var bestIndex = 0;
+    var bestLen   = 0;
+    for (var i = 0; i < tabs.length; i++) {
+      final p = tabs[i].path;
+      if (location.startsWith(p) && p.length > bestLen) {
+        bestIndex = i;
+        bestLen   = p.length;
+      }
+    }
+    return bestIndex;
   }
 }
 

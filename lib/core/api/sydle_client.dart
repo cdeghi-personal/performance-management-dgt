@@ -1,33 +1,37 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../auth/auth_interceptor.dart';
+import '../auth/session_manager.dart';
 import '../config/app_config.dart';
 import '../error/sydle_exception.dart';
 
-final sydleClientProvider = Provider<SydleClient>((ref) => SydleClient());
+final sydleClientProvider = Provider<SydleClient>(
+  (ref) => SydleClient(ref.read(sessionManagerProvider)),
+);
 
 /// Camada HTTP central do SYDLE ONE.
 ///
-/// Todas as chamadas são POST para:
-///   POST <baseUrl>/<pacote>/<classe>/<metodo>
+/// Todas as chamadas de negócio são POST para:
+///   POST <baseUrl>/main/<pacote>/<classe>/<metodo>
 ///
 /// Headers fixos em toda requisição:
-///   Authorization: Basic <token_servico>
-///   X-Explorer-Account-Token: <organizacao>
+///   Authorization: Bearer <token>   ← injetado pelo AuthInterceptor
+///   X-Explorer-Account-Token: <org>
 class SydleClient {
   late final Dio _dio;
 
-  SydleClient() {
+  SydleClient(SessionManager session) {
     _dio = Dio(BaseOptions(
       baseUrl: AppConfig.baseUrl,
       connectTimeout: const Duration(seconds: 15),
       receiveTimeout: const Duration(seconds: 30),
       contentType: 'application/json',
       headers: {
-        'Authorization': AppConfig.authorizationToken,
         'X-Explorer-Account-Token': AppConfig.organization,
       },
     ));
 
+    _dio.interceptors.add(AuthInterceptor(session));
     _dio.interceptors.add(LogInterceptor(
       requestBody: true,
       responseBody: true,

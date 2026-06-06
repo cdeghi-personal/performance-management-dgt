@@ -42,5 +42,9 @@ ios/Runner/GeneratedPluginRegistrant.m
 **/*.g.dart
 **/*.freezed.dart
 
+# Logs
+android/hs_err_pid*.log
+custom_lint.log
+
 # Misc
 *.DS_Store

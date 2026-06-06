@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_colors.dart';
 import '../domain/feedback_model.dart';
 
 class FeedbackFormScreen extends ConsumerStatefulWidget {
@@ -83,7 +82,7 @@ class _FeedbackFormScreenState extends ConsumerState<FeedbackFormScreen> {
 
             // Visibilidade
             DropdownButtonFormField<FeedbackVisibility>(
-              value: _visibility,
+              initialValue: _visibility,
               decoration: const InputDecoration(labelText: 'Visibilidade'),
               items: const [
                 DropdownMenuItem(

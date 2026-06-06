@@ -36,7 +36,7 @@ class PromotionStatusBadge extends StatelessWidget {
 
   static const _colors = {
     PromotionStatus.pending: AppColors.statusAtRisk,
-    PromotionStatus.underReview: AppColors.primaryLight,
+    PromotionStatus.underReview: AppColors.statusCompleted,
     PromotionStatus.approved: AppColors.statusOnTrack,
     PromotionStatus.rejected: AppColors.statusBehind,
     PromotionStatus.onHold: AppColors.statusDraft,
@@ -48,7 +48,7 @@ class PromotionStatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

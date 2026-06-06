@@ -1,19 +1,19 @@
 // Valores injetados via --dart-define no build/run. Nunca hardcodar aqui.
-// Exemplo: flutter run --dart-define=SYDLE_ORG=sydle --dart-define=SYDLE_AUTH_TOKEN=Basic xxx
+// Exemplo: flutter run --dart-define=SYDLE_ORG=dgt-consultoria-dev
 class AppConfig {
   AppConfig._();
 
   static const String organization = String.fromEnvironment(
     'SYDLE_ORG',
-    defaultValue: 'sydle', // substituir pela org real da DGT
+    defaultValue: 'sydle',
   );
 
+  /// Base para chamadas de negócio e autenticação.
+  /// Formato: https://<org>.sydle.one/api/1/<identificadorDaAplicacao>
+  /// O identificadorDaAplicacao é 'perfManagement' — deve estar configurado no org SYDLE.
   static String get baseUrl =>
-      'https://$organization.sydle.one/api/1/main';
+      'https://$organization.sydle.one/api/1/perfManagement';
 
-  // Basic <base64(usuario:senha)> da conta de serviço do app
-  static const String authorizationToken = String.fromEnvironment(
-    'SYDLE_AUTH_TOKEN',
-    defaultValue: '', // obrigatório no build de produção
-  );
+  static String get authBaseUrl =>
+      'https://$organization.sydle.one/api/1/perfManagement';
 }

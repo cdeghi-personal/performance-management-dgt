@@ -4,45 +4,51 @@ class AppColors {
   AppColors._();
 
   // DGT Brand
-  static const primary = Color(0xFF1A3C6E);       // Azul corporativo DGT
-  static const primaryLight = Color(0xFF2A5FA8);
-  static const primaryDark = Color(0xFF0D2447);
-  static const accent = Color(0xFF00A896);         // Verde-teal para destaques
+  static const Color primary   = Color(0xFFFCB017); // amarelo principal
+  static const Color secondary = Color(0xFFFED402); // amarelo secundário
+
+  // Grays
+  static const Color darkGray  = Color(0xFF3A3A3A); // headers, textos
+  static const Color midGray   = Color(0xFF787878); // subtítulos
+  static const Color lightGray = Color(0xFFD3D3D3); // bordas, placeholders
 
   // Superfícies
-  static const background = Color(0xFFF5F7FA);
-  static const surface = Color(0xFFFFFFFF);
-  static const surfaceVariant = Color(0xFFEEF2F7);
+  static const Color background = Color(0xFFF5F5F5);
+  static const Color surface    = Color(0xFFFFFFFF);
 
   // Texto
-  static const textPrimary = Color(0xFF1A1D23);
-  static const textSecondary = Color(0xFF6B7280);
-  static const textDisabled = Color(0xFFB0B7C3);
+  static const Color textPrimary   = Color(0xFF3A3A3A);
+  static const Color textSecondary = Color(0xFF787878);
+  static const Color textDisabled  = Color(0xFFBDBDBD);
 
-  // Status de metas / avaliações
-  static const statusOnTrack = Color(0xFF16A34A);     // Verde — dentro do prazo
-  static const statusAtRisk = Color(0xFFF59E0B);      // Âmbar — em risco
-  static const statusBehind = Color(0xFFDC2626);      // Vermelho — atrasado
-  static const statusCompleted = Color(0xFF0EA5E9);   // Azul — concluído
-  static const statusDraft = Color(0xFF9CA3AF);       // Cinza — rascunho
+  // Bordas
+  static const Color border      = Color(0xFFE8E8E8);
+  static const Color borderLight = Color(0xFFF0F0F0);
+  static const Color borderFocus = Color(0xFFFCB017);
 
-  // Avaliações (score)
-  static const scoreExceeds = Color(0xFF16A34A);      // Acima das expectativas
-  static const scoreMeets = Color(0xFF2A5FA8);        // Atende
-  static const scoreBelow = Color(0xFFF59E0B);        // Abaixo parcial
-  static const scoreUnsatisfactory = Color(0xFFDC2626); // Insatisfatório
+  // Classificação de desempenho
+  static const Color classAbaixo  = Color(0xFFE57373); // Abaixo do nível
+  static const Color classNoNivel = Color(0xFF90CAF9); // No nível
+  static const Color classAcima   = Color(0xFFA5D6A7); // Acima do nível
+  static const Color classTop     = Color(0xFFFCB017); // Top Performer
 
-  // Cotas DGT
-  static const quotaFilled = Color(0xFF16A34A);
-  static const quotaPartial = Color(0xFFF59E0B);
-  static const quotaEmpty = Color(0xFFDC2626);
+  // Background semântico das classificações
+  static const Color classAbaixoBg  = Color(0xFFFFEBEE);
+  static const Color classNoNivelBg = Color(0xFFE3F2FD);
+  static const Color classAcimaBg   = Color(0xFFE8F5E9);
+  static const Color classTopBg     = Color(0xFFFFF8E1);
 
-  // Divisores e bordas
-  static const border = Color(0xFFE5E7EB);
-  static const borderFocus = Color(0xFF2A5FA8);
+  // Status de metas / etapas
+  static const Color statusOnTrack   = Color(0xFF2E7D32);
+  static const Color statusAtRisk    = Color(0xFFB05E00);
+  static const Color statusBehind    = Color(0xFFC62828);
+  static const Color statusCompleted = Color(0xFF185FA5);
+  static const Color statusDraft     = Color(0xFF787878);
 
-  // Dark mode
-  static const darkBackground = Color(0xFF111827);
-  static const darkSurface = Color(0xFF1F2937);
-  static const darkSurfaceVariant = Color(0xFF374151);
+  // Background dos status
+  static const Color statusOnTrackBg   = Color(0xFFEAFBE7);
+  static const Color statusAtRiskBg    = Color(0xFFFEF3DC);
+  static const Color statusBehindBg    = Color(0xFFFFEBEE);
+  static const Color statusCompletedBg = Color(0xFFE3F2FD);
+  static const Color statusDraftBg     = Color(0xFFF5F5F5);
 }

@@ -28,9 +28,9 @@ class QuotaProgressCard extends StatelessWidget {
   const QuotaProgressCard({super.key, required this.target});
 
   Color get _color {
-    if (target.isMet) return AppColors.quotaFilled;
-    if (target.fillRate >= 0.7) return AppColors.quotaPartial;
-    return AppColors.quotaEmpty;
+    if (target.isMet) return AppColors.statusOnTrack;
+    if (target.fillRate >= 0.7) return AppColors.statusAtRisk;
+    return AppColors.statusBehind;
   }
 
   @override
@@ -67,7 +67,7 @@ class QuotaProgressCard extends StatelessWidget {
             LinearPercentIndicator(
               percent: target.fillRate.clamp(0.0, 1.0),
               lineHeight: 8,
-              backgroundColor: AppColors.surfaceVariant,
+              backgroundColor: AppColors.border,
               progressColor: _color,
               barRadius: const Radius.circular(4),
               padding: EdgeInsets.zero,

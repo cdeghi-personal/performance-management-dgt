@@ -15,7 +15,6 @@ class PerformanceApp extends ConsumerWidget {
       title: 'DGT Performance',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
-      darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.light,
       routerConfig: router,
       localizationsDelegates: const [
