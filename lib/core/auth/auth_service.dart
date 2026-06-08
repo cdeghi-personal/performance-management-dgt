@@ -19,11 +19,6 @@ class AuthService {
       receiveTimeout: const Duration(seconds: 30),
       contentType: 'application/json',
     ));
-    _dio.interceptors.add(LogInterceptor(
-      requestHeader: true,
-      responseBody: true,
-      error: true,
-    ));
   }
 
   /// GET /sys/auth/signIn com Basic auth (credenciais do usuário).
@@ -38,10 +33,10 @@ class AuthService {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       if (status == 401 || status == 403) {
-        throw SydleAuthException('Usuário ou senha inválidos. [HTTP $status]');
+        throw const SydleAuthException('Usuário ou senha inválidos.');
       }
       throw SydleException(
-        '[HTTP ${status ?? '?'}] ${e.response?.data?.toString() ?? e.message ?? 'Erro de conexão'}',
+        e.response?.data?.toString() ?? e.message ?? 'Erro de conexão',
         statusCode: status,
       );
     }
