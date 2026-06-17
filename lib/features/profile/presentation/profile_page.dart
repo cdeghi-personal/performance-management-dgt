@@ -109,10 +109,10 @@ class ProfilePage extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // ── Version ──────────────────────────────────────────────────────
-          const Center(
+          Center(
             child: Text(
               'v1.0.0 · ${AppConfig.buildDate}',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
                 color: AppColors.textDisabled,
               ),
