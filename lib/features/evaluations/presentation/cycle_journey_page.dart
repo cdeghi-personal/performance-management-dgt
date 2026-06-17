@@ -210,14 +210,14 @@ class _CycleJourneyPageState extends ConsumerState<CycleJourneyPage> {
                 _CycleHeader(cycle: cycle, progress: progress),
                 const SizedBox(height: 20),
                 if (isHR)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
                     child: Row(
                       children: [
-                        const Icon(Icons.edit_outlined,
+                        Icon(Icons.edit_outlined,
                             size: 14, color: AppColors.midGray),
-                        const SizedBox(width: 6),
-                        const Text(
+                        SizedBox(width: 6),
+                        Text(
                           'Você pode editar status e prazo de cada fase.',
                           style: TextStyle(
                               fontSize: 12, color: AppColors.textSecondary),

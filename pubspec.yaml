@@ -19,6 +19,9 @@ dependencies:
   # Navigation
   go_router: ^13.2.0
 
+  # Env
+  flutter_dotenv: ^5.2.1
+
   # HTTP / API
   dio: ^5.4.3
 
@@ -73,6 +76,7 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
   assets:
+    - .env
     - assets/images/
     - assets/icons/
   # Fonte Inter via google_fonts (download automático, sem arquivos locais necessários)

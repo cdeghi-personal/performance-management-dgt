@@ -768,7 +768,7 @@ Tela `/perfil`. Exibe:
 - `topPerformer` exibido **somente para leader e HR** (employee não vê)
 - Fallback `_InfoNotFound` quando `EmployeePerfil == null`
 - Botão de logout
-- Número de versão discreto abaixo do botão: `Text('v1.0.0 · 01/06/2026', style: TextStyle(fontSize: 11, color: AppColors.textDisabled))`
+- Número de versão discreto abaixo do botão: `'v1.0.0 · ' + AppConfig.buildDate` — `buildDate` vem do `--dart-define=BUILD_DATE=...` passado no build; exibe `dev` se omitido
 
 ## Processo de negócio — fluxo do ciclo
 
@@ -831,6 +831,8 @@ await _client.call(
 
 Usar `Cycle.toJson()` ou montar o payload manualmente — nunca usar `_patch` para campos de array.
 
+> ⚠️ O `_patch` existe no SYDLE ONE mas ainda não está estável neste projeto — não usar até validação completa.
+
 ## Regras de compatibilidade Flutter Web (dart2js)
 
 Estas regras evitam crashes silenciosos no Flutter Web:
@@ -887,19 +889,23 @@ Versão atual publicada: **1.0.0+3** (Play Store) — após fix do URL de autent
 
 ### Comando de build
 
-```bash
-flutter build appbundle --release --dart-define=SYDLE_ORG=dgt-consultoria
+```powershell
+$d = Get-Date -Format "dd/MM/yyyy HH:mm"
+flutter build appbundle --release --dart-define=SYDLE_ORG=dgt-consultoria "--dart-define=BUILD_DATE=$d"
 ```
 
 O AAB gerado fica em `build/app/outputs/bundle/release/app-release.aab`.
 
 ### APK de teste (Android)
 
-```bash
-flutter build apk --debug --dart-define=SYDLE_ORG=dgt-consultoria
-# ou produção:
-flutter build apk --release --dart-define=SYDLE_ORG=dgt-consultoria
+```powershell
+$d = Get-Date -Format "dd/MM/yyyy HH:mm"
+flutter build apk --release --dart-define=SYDLE_ORG=dgt-consultoria "--dart-define=BUILD_DATE=$d"
+# debug:
+flutter build apk --debug --dart-define=SYDLE_ORG=dgt-consultoria "--dart-define=BUILD_DATE=$d"
 ```
+
+O `BUILD_DATE` é exibido discretamente na tela de Perfil (`v1.0.0 · DD/MM/YYYY HH:mm`). Se omitido, aparece `v1.0.0 · dev`.
 
 ## Android — Configurações de release
 

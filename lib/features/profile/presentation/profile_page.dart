@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_utils.dart' as du;
 import '../../../shared/widgets/avatar_initials.dart';
@@ -110,7 +111,7 @@ class ProfilePage extends ConsumerWidget {
           // ── Version ──────────────────────────────────────────────────────
           const Center(
             child: Text(
-              'v1.0.0 · 01/06/2026',
+              'v1.0.0 · ${AppConfig.buildDate}',
               style: TextStyle(
                 fontSize: 11,
                 color: AppColors.textDisabled,

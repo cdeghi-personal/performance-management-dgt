@@ -123,12 +123,12 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               if (eval.goals.isNotEmpty) ...[
-                _SectionHeader(title: 'Metas do período'),
+                const _SectionHeader(title: 'Metas do período'),
                 const SizedBox(height: 8),
                 for (final g in eval.goals) _CurrentGoalCard(goal: g),
                 const SizedBox(height: 16),
               ],
-              _SectionHeader(title: 'Metas para o próximo período'),
+              const _SectionHeader(title: 'Metas para o próximo período'),
               const SizedBox(height: 8),
               if (eval.nextGoals.isEmpty)
                 const _EmptyGoals()
@@ -305,7 +305,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
 
         // ── Metas do período (read-only) ───────────────────────────────
         if (eval.goals.isNotEmpty) ...[
-          _SectionHeader(title: 'Metas do período'),
+          const _SectionHeader(title: 'Metas do período'),
           const SizedBox(height: 8),
           for (final g in eval.goals) _CurrentGoalCard(goal: g),
           const SizedBox(height: 16),
@@ -314,7 +314,7 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
         // ── Metas próximo período ──────────────────────────────────────
         Row(
           children: [
-            Expanded(child: _SectionHeader(title: 'Metas para o próximo período')),
+            const Expanded(child: _SectionHeader(title: 'Metas para o próximo período')),
             if (canEdit && !_adding)
               GestureDetector(
                 onTap: () => setState(() => _adding = true),
@@ -647,11 +647,11 @@ class _EmptyGoals extends StatelessWidget {
   const _EmptyGoals();
 
   @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+  Widget build(BuildContext context) => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
         child: Text(
           'Nenhuma meta definida.',
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 13,
               color: AppColors.textDisabled,
               fontStyle: FontStyle.italic),
