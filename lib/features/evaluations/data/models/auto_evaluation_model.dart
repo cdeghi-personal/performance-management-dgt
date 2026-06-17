@@ -47,8 +47,19 @@ class AutoEvaluation {
   final EvaluationStatus status;
   final String employeeId;
   final String appraiserId;
-  final List<TabEvaluation> behavioralEvaluation;
-  final List<TabEvaluation> technicalEvaluation;
+
+  // Grupos dinâmicos (2 a 4) — substituem behavioralEvaluation/technicalEvaluation.
+  // tytleGroupN: identificador do tipo de grupo vindo do SYDLE ('behavioral', 'technical', etc.)
+  // groupN: critérios avaliados nesse grupo.
+  final String tytleGroup1;
+  final List<TabEvaluation> group1;
+  final String tytleGroup2;
+  final List<TabEvaluation> group2;
+  final String? tytleGroup3;
+  final List<TabEvaluation>? group3;
+  final String? tytleGroup4;
+  final List<TabEvaluation>? group4;
+
   final List<TabGoal> goals; // chave JSON: 'Goals'
   final String? attentionPoints;
   final String? strengths;
@@ -69,8 +80,14 @@ class AutoEvaluation {
     required this.status,
     required this.employeeId,
     required this.appraiserId,
-    this.behavioralEvaluation = const [],
-    this.technicalEvaluation = const [],
+    this.tytleGroup1 = 'behavioral',
+    this.group1 = const [],
+    this.tytleGroup2 = 'technical',
+    this.group2 = const [],
+    this.tytleGroup3,
+    this.group3,
+    this.tytleGroup4,
+    this.group4,
     this.goals = const [],
     this.attentionPoints,
     this.strengths,
@@ -91,32 +108,45 @@ class AutoEvaluation {
       cyclePeriod:  _refStr(json['cycle'], 'period'),
       cycleYear:    _refInt(json['cycle'], 'year'),
       status:       EvaluationStatus.fromString(json['status'] as String? ?? ''),
-      employeeId:  _refId(json['employee']),
-      appraiserId: _refId(json['appraiser']),
-      behavioralEvaluation: _parseTabList(json['behavioralEvaluation']),
-      technicalEvaluation:  _parseTabList(json['technicalEvaluation']),
-      goals: _parseGoalList(json['Goals']),
+      employeeId:   _refId(json['employee']),
+      appraiserId:  _refId(json['appraiser']),
+      // group1/group2: fallback para behavioralEvaluation/technicalEvaluation (dados legados)
+      tytleGroup1:  json['tytleGroup1'] as String? ?? 'behavioral',
+      group1:       _parseTabList(json['group1'] ?? json['behavioralEvaluation']),
+      tytleGroup2:  json['tytleGroup2'] as String? ?? 'technical',
+      group2:       _parseTabList(json['group2'] ?? json['technicalEvaluation']),
+      tytleGroup3:  json['tytleGroup3'] as String?,
+      group3:       json['group3'] != null ? _parseTabList(json['group3']) : null,
+      tytleGroup4:  json['tytleGroup4'] as String?,
+      group4:       json['group4'] != null ? _parseTabList(json['group4']) : null,
+      goals:           _parseGoalList(json['Goals']),
       attentionPoints: json['attentionPoints'] as String?,
-      strengths:      json['strengths'] as String?,
-      feedback:       json['feedback'] as String?,
-      actionPlan:     json['actionPlan'] as String?,
-      nextGoals: List<String>.from(json['nextGoals'] as List<dynamic>? ?? []),
-      evaluationDate: _parseDate(json['evaluationDate']),
-      feedbackDate:   _parseDate(json['feedbackDate']),
-      finishedDate:   _parseDate(json['finishedDate']),
-      creationDate:   _parseDate(json['_creationDate']) ?? DateTime.now(),
-      lastUpdate:     _parseDate(json['_lastUpdate']),
+      strengths:       json['strengths'] as String?,
+      feedback:        json['feedback'] as String?,
+      actionPlan:      json['actionPlan'] as String?,
+      nextGoals:       List<String>.from(json['nextGoals'] as List<dynamic>? ?? []),
+      evaluationDate:  _parseDate(json['evaluationDate']),
+      feedbackDate:    _parseDate(json['feedbackDate']),
+      finishedDate:    _parseDate(json['finishedDate']),
+      creationDate:    _parseDate(json['_creationDate']) ?? DateTime.now(),
+      lastUpdate:      _parseDate(json['_lastUpdate']),
     );
   }
 
   Map<String, dynamic> toJson() => {
-    '_id': id,
-    'cycle':     {'_id': cycleId},
-    'employee':  {'_id': employeeId},
-    'appraiser': {'_id': appraiserId},
-    'status': status.sydleValue,
-    'behavioralEvaluation': behavioralEvaluation.map((e) => e.toJson()).toList(),
-    'technicalEvaluation':  technicalEvaluation.map((e) => e.toJson()).toList(),
+    '_id':        id,
+    'cycle':      {'_id': cycleId},
+    'employee':   {'_id': employeeId},
+    'appraiser':  {'_id': appraiserId},
+    'status':     status.sydleValue,
+    'tytleGroup1': tytleGroup1,
+    'group1':      group1.map((e) => e.toJson()).toList(),
+    'tytleGroup2': tytleGroup2,
+    'group2':      group2.map((e) => e.toJson()).toList(),
+    if (tytleGroup3 != null) 'tytleGroup3': tytleGroup3,
+    if (group3 != null) 'group3': group3!.map((e) => e.toJson()).toList(),
+    if (tytleGroup4 != null) 'tytleGroup4': tytleGroup4,
+    if (group4 != null) 'group4': group4!.map((e) => e.toJson()).toList(),
     'Goals': goals.map((g) => g.toJson()).toList(),
     if (attentionPoints != null) 'attentionPoints': attentionPoints,
     if (strengths != null) 'strengths': strengths,
@@ -126,6 +156,32 @@ class AutoEvaluation {
   };
 
   bool get isReadOnly => status.isReadOnly;
+
+  /// Lista de grupos ativos na avaliação (2 a 4 grupos).
+  List<EvaluationGroup> get groups {
+    final result = <EvaluationGroup>[
+      EvaluationGroup(title: tytleGroup1, criteria: group1),
+      EvaluationGroup(title: tytleGroup2, criteria: group2),
+    ];
+    if (tytleGroup3 != null && tytleGroup3!.isNotEmpty) {
+      result.add(EvaluationGroup(title: tytleGroup3!, criteria: group3 ?? []));
+    }
+    if (tytleGroup4 != null && tytleGroup4!.isNotEmpty) {
+      result.add(EvaluationGroup(title: tytleGroup4!, criteria: group4 ?? []));
+    }
+    return result;
+  }
+
+  /// Média geral sobre todos os critérios avaliados.
+  double get overallAverage {
+    final allScores = groups
+        .expand((g) => g.criteria)
+        .where((t) => t.evaluation != null)
+        .map((t) => t.evaluation!.toDouble())
+        .toList();
+    if (allScores.isEmpty) return 0;
+    return allScores.reduce((a, b) => a + b) / allScores.length;
+  }
 
   static String _refId(dynamic ref) {
     if (ref is Map<String, dynamic>) return ref['_id'] as String? ?? '';

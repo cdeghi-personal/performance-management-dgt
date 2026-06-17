@@ -9,6 +9,9 @@ class EmployeePerfil {
   final bool topPerformer;
   final String classificacationPreviousCycle;
   final bool topPerformerUltimoCiclo;
+  // Novos campos — "Colaborador" ou "Prestador"
+  final String? type;
+  final String? eMailCelular;
 
   const EmployeePerfil({
     required this.id,
@@ -20,6 +23,8 @@ class EmployeePerfil {
     required this.topPerformer,
     required this.classificacationPreviousCycle,
     required this.topPerformerUltimoCiclo,
+    this.type,
+    this.eMailCelular,
   });
 
   factory EmployeePerfil.fromJson(Map<String, dynamic> json) {
@@ -36,7 +41,15 @@ class EmployeePerfil {
       topPerformer:                   json['topPerformer'] as bool? ?? false,
       classificacationPreviousCycle:  json['classificacationPreviousCycle'] as String? ?? '',
       topPerformerUltimoCiclo:        json['topPerformerUltimoCiclo'] as bool? ?? false,
+      type:                           json['type'] as String?,
+      eMailCelular:                   json['eMailCelular'] as String?,
     );
+  }
+
+  /// Rótulo de pessoa baseado no tipo do perfil.
+  String get personTypeLabel {
+    if (type == 'Prestador') return 'Prestador';
+    return 'Colaborador';
   }
 
   static DateTime? _parseDate(dynamic value) {

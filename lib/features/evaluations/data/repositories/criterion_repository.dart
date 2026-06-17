@@ -12,14 +12,13 @@ class CriterionRepository {
   final SydleClient _client;
   CriterionRepository(this._client);
 
-  /// Busca critérios ativos filtrados pelos IDs do ciclo ativo,
-  /// separados por tipo (behavioral / technical).
+  /// Busca critérios ativos filtrados pelos IDs do ciclo ativo.
+  /// Retorna mapa indexado por CriterionType (suporta todos os 5 tipos).
   Future<Map<CriterionType, List<Criterion>>> getByCycle(
     List<String> criteriaIds,
   ) async {
-    if (criteriaIds.isEmpty) {
-      return {CriterionType.behavioral: [], CriterionType.technical: []};
-    }
+    final empty = {for (final t in CriterionType.values) t: <Criterion>[]};
+    if (criteriaIds.isEmpty) return empty;
 
     final data = await _client.call(
       SydlePackage.perfMngt,
@@ -40,11 +39,10 @@ class CriterionRepository {
 
     final response = SydleSearchResponse.fromJson(data, Criterion.fromJson);
 
-    return {
-      CriterionType.behavioral:
-          response.items.where((c) => c.type == CriterionType.behavioral).toList(),
-      CriterionType.technical:
-          response.items.where((c) => c.type == CriterionType.technical).toList(),
-    };
+    final result = {for (final t in CriterionType.values) t: <Criterion>[]};
+    for (final c in response.items) {
+      result[c.type]!.add(c);
+    }
+    return result;
   }
 }

@@ -145,12 +145,15 @@ class _PerfilCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = <_InfoRow>[
+      _InfoRow(label: 'Tipo', value: perfil.personTypeLabel),
       if (perfil.careerLevel.isNotEmpty)
         _InfoRow(label: 'Nível de carreira', value: perfil.careerLevel),
       if (perfil.function.isNotEmpty)
         _InfoRow(label: 'Função', value: perfil.function),
       if (perfil.hiringDate != null)
         _InfoRow(label: 'Data de admissão', value: du.formatDate(perfil.hiringDate!)),
+      if (perfil.eMailCelular?.isNotEmpty == true)
+        _InfoRow(label: 'E-mail / Celular', value: perfil.eMailCelular!),
       if (perfil.classificacationLastCycle.isNotEmpty)
         _InfoRow(label: 'Classificação (último ciclo)', value: _classLabel(perfil.classificacationLastCycle)),
       if (showTopPerformer)

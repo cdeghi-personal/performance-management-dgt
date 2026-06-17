@@ -5,7 +5,6 @@ import '../../../core/utils/date_utils.dart' as du;
 import '../../../shared/widgets/dgt_app_bar.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../auth/domain/auth_provider.dart';
-import '../data/models/criterion_model.dart';
 import '../data/models/lider_evaluation_model.dart';
 import '../domain/enrichment_providers.dart';
 import '../domain/evaluation_providers.dart';
@@ -59,10 +58,7 @@ class ReceivedEvaluationPage extends ConsumerWidget {
           final criteriaMap = <String, String>{};
           final criteria = criteriaAsync.valueOrNull;
           if (criteria != null) {
-            for (final c in [
-              ...criteria[CriterionType.behavioral] ?? [],
-              ...criteria[CriterionType.technical] ?? [],
-            ]) {
+            for (final c in criteria.values.expand((l) => l)) {
               criteriaMap[c.id] = c.name;
             }
           }
@@ -79,30 +75,20 @@ class ReceivedEvaluationPage extends ConsumerWidget {
                 const SizedBox(height: 16),
               ],
 
-              if (eval.behavioralEvaluation.isNotEmpty) ...[
-                const _SectionLabel(label: 'Critérios comportamentais'),
-                const SizedBox(height: 8),
-                for (final t in eval.behavioralEvaluation) ...[
-                  _ScoreCard(
-                    name: criteriaMap[t.criterionId] ?? t.criterionId,
-                    score: t.evaluation,
-                  ),
+              for (final group in eval.groups) ...[
+                if (group.criteria.any((t) => criteriaMap.containsKey(t.criterionId))) ...[
+                  _SectionLabel(label: group.displayTitle),
+                  const SizedBox(height: 8),
+                  for (final t in group.criteria)
+                    if (criteriaMap.containsKey(t.criterionId)) ...[
+                      _ScoreCard(
+                        name: criteriaMap[t.criterionId]!,
+                        score: t.evaluation,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   const SizedBox(height: 8),
                 ],
-                const SizedBox(height: 8),
-              ],
-
-              if (eval.technicalEvaluation.isNotEmpty) ...[
-                const _SectionLabel(label: 'Critérios técnicos'),
-                const SizedBox(height: 8),
-                for (final t in eval.technicalEvaluation) ...[
-                  _ScoreCard(
-                    name: criteriaMap[t.criterionId] ?? t.criterionId,
-                    score: t.evaluation,
-                  ),
-                  const SizedBox(height: 8),
-                ],
-                const SizedBox(height: 8),
               ],
 
               if (_hasNotes(eval)) ...[

@@ -168,12 +168,12 @@ final liderEvaluationForEmployeeProvider =
 
 // ── Critérios ─────────────────────────────────────────────────────────────────
 
-/// Critérios do ciclo ativo separados por tipo (behavioral / technical).
+/// Critérios do ciclo ativo separados por tipo (suporta todos os 5 tipos).
 final cycleCriteriaProvider = FutureProvider<Map<CriterionType, List<Criterion>>>(
   (ref) async {
     final cycle = await ref.watch(activeCycleProvider.future);
     if (cycle == null || cycle.criteriaIds.isEmpty) {
-      return {CriterionType.behavioral: [], CriterionType.technical: []};
+      return {for (final t in CriterionType.values) t: <Criterion>[]};
     }
     return ref.read(criterionRepositoryProvider).getByCycle(cycle.criteriaIds);
   },

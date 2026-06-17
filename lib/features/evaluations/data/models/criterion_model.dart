@@ -1,11 +1,17 @@
 enum CriterionType {
   behavioral,
-  technical;
+  technical,
+  delivery,
+  governance,
+  compliance;
 
   static CriterionType fromString(String value) {
     switch (value) {
-      case 'technical': return CriterionType.technical;
-      default:          return CriterionType.behavioral;
+      case 'technical':   return CriterionType.technical;
+      case 'delivery':    return CriterionType.delivery;
+      case 'governance':  return CriterionType.governance;
+      case 'compliance':  return CriterionType.compliance;
+      default:            return CriterionType.behavioral;
     }
   }
 }

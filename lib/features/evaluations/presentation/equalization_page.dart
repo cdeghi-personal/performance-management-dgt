@@ -10,6 +10,7 @@ import '../../profile/domain/profile_providers.dart';
 import '../data/models/auto_evaluation_model.dart';
 import '../data/models/cycle_model.dart';
 import '../data/models/lider_evaluation_model.dart';
+import '../data/models/tab_evaluation_model.dart';
 import '../data/models/tab_goal_model.dart';
 import '../data/repositories/colaborador_repository.dart';
 import '../data/repositories/lider_evaluation_repository.dart';
@@ -110,31 +111,37 @@ class _EqualizationPageState extends ConsumerState<EqualizationPage> {
             localNotes != (e.commentsPerfMeeting ?? '');
         if (!changed) continue;
         await repo.update(LiderEvaluation(
-          id:                   e.id,
-          cycleId:              e.cycleId,
-          cyclePeriod:          e.cyclePeriod,
-          cycleYear:            e.cycleYear,
-          status:               e.status,
-          employeeId:           e.employeeId,
-          employeeName:         e.employeeName,
-          appraiserId:          e.appraiserId,
-          appraiserName:        e.appraiserName,
-          behavioralEvaluation: e.behavioralEvaluation,
-          technicalEvaluation:  e.technicalEvaluation,
-          goals:                e.goals,
-          attentionPoints:      e.attentionPoints,
-          strengths:            e.strengths,
-          feedback:             e.feedback,
-          actionPlan:           e.actionPlan,
-          nextGoals:            e.nextGoals,
-          classification:       localClass,
-          topPerformer:         localTop,
-          commentsPerfMeeting:  localNotes.isEmpty ? null : localNotes,
-          evaluationDate:       e.evaluationDate,
-          feedbackDate:         e.feedbackDate,
-          finishedDate:         e.finishedDate,
-          creationDate:         e.creationDate,
-          lastUpdate:           e.lastUpdate,
+          id:           e.id,
+          cycleId:      e.cycleId,
+          cyclePeriod:  e.cyclePeriod,
+          cycleYear:    e.cycleYear,
+          status:       e.status,
+          employeeId:   e.employeeId,
+          employeeName: e.employeeName,
+          appraiserId:  e.appraiserId,
+          appraiserName: e.appraiserName,
+          tytleGroup1:  e.tytleGroup1,
+          group1:       e.group1,
+          tytleGroup2:  e.tytleGroup2,
+          group2:       e.group2,
+          tytleGroup3:  e.tytleGroup3,
+          group3:       e.group3,
+          tytleGroup4:  e.tytleGroup4,
+          group4:       e.group4,
+          goals:              e.goals,
+          attentionPoints:    e.attentionPoints,
+          strengths:          e.strengths,
+          feedback:           e.feedback,
+          actionPlan:         e.actionPlan,
+          nextGoals:          e.nextGoals,
+          classification:     localClass,
+          topPerformer:       localTop,
+          commentsPerfMeeting: localNotes.isEmpty ? null : localNotes,
+          evaluationDate:     e.evaluationDate,
+          feedbackDate:       e.feedbackDate,
+          finishedDate:       e.finishedDate,
+          creationDate:       e.creationDate,
+          lastUpdate:         e.lastUpdate,
         ));
       }
       if (!mounted) return;
@@ -152,24 +159,6 @@ class _EqualizationPageState extends ConsumerState<EqualizationPage> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
-  }
-
-  double _behavioralAvg(LiderEvaluation eval) {
-    final scores = eval.behavioralEvaluation
-        .where((t) => t.evaluation != null)
-        .map((t) => t.evaluation!.toDouble())
-        .toList();
-    if (scores.isEmpty) return 0;
-    return scores.reduce((a, b) => a + b) / scores.length;
-  }
-
-  double _technicalAvg(LiderEvaluation eval) {
-    final scores = eval.technicalEvaluation
-        .where((t) => t.evaluation != null)
-        .map((t) => t.evaluation!.toDouble())
-        .toList();
-    if (scores.isEmpty) return 0;
-    return scores.reduce((a, b) => a + b) / scores.length;
   }
 
   void _showDetails(BuildContext context, LiderEvaluation eval) {
@@ -513,8 +502,7 @@ class _EqualizationPageState extends ConsumerState<EqualizationPage> {
                       appraiserName: colabors[e.appraiserId]?.name.isNotEmpty == true
                           ? colabors[e.appraiserId]!.name
                           : e.appraiserName,
-                      behavioralAvg: _behavioralAvg(e),
-                      technicalAvg:  _technicalAvg(e),
+                      groups: e.groups,
                       classification: _classifications[e.id],
                       topPerformer:   _topPerformers[e.id] ?? false,
                       meetingNotesCtrl: _meetingNotesCtrls[e.id],
@@ -892,8 +880,7 @@ class _EmployeeCard extends ConsumerWidget {
   final ColaboradorDGT? colaborador;
   final String careerLevel;
   final String appraiserName;
-  final double behavioralAvg;
-  final double technicalAvg;
+  final List<EvaluationGroup> groups;
   final EvaluationClassification? classification;
   final bool topPerformer;
   final TextEditingController? meetingNotesCtrl;
@@ -909,8 +896,7 @@ class _EmployeeCard extends ConsumerWidget {
     required this.colaborador,
     required this.careerLevel,
     required this.appraiserName,
-    required this.behavioralAvg,
-    required this.technicalAvg,
+    required this.groups,
     required this.classification,
     required this.topPerformer,
     required this.meetingNotesCtrl,
@@ -973,7 +959,7 @@ class _EmployeeCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                _AvgPair(behavioral: behavioralAvg, technical: technicalAvg),
+                _GroupAvgRow(groups: groups),
                 const SizedBox(width: 8),
                 // Perfil button
                 GestureDetector(
@@ -1106,19 +1092,28 @@ class _EmployeeCard extends ConsumerWidget {
   }
 }
 
-// Average pair widget
-class _AvgPair extends StatelessWidget {
-  final double behavioral;
-  final double technical;
-  const _AvgPair({required this.behavioral, required this.technical});
+// Dynamic group averages — mostra uma célula por grupo ativo (2 a 4 grupos).
+class _GroupAvgRow extends StatelessWidget {
+  final List<EvaluationGroup> groups;
+  const _GroupAvgRow({required this.groups});
+
+  static String _abbrev(String displayTitle) {
+    // Usa a inicial maiúscula do título localizado como rótulo curto.
+    if (displayTitle.isEmpty) return '?';
+    return displayTitle[0].toUpperCase();
+  }
 
   @override
   Widget build(BuildContext context) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _AvgCell(label: 'C', value: behavioral),
-          const SizedBox(width: 8),
-          _AvgCell(label: 'T', value: technical),
+          for (var i = 0; i < groups.length; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
+            _AvgCell(
+              label: _abbrev(groups[i].displayTitle),
+              value: groups[i].average,
+            ),
+          ],
         ],
       );
 }

@@ -7,7 +7,6 @@ import '../../../shared/widgets/dgt_app_bar.dart';
 import '../../../shared/widgets/read_only_banner.dart';
 import '../../auth/domain/auth_provider.dart';
 import '../data/models/auto_evaluation_model.dart';
-import '../data/models/criterion_model.dart';
 import '../data/models/tab_evaluation_model.dart';
 import '../data/models/tab_goal_model.dart';
 import '../domain/enrichment_providers.dart';
@@ -29,7 +28,6 @@ class _SelfEvaluationPageState extends ConsumerState<SelfEvaluationPage> {
   final _attentionCtrl  = TextEditingController();
   final _feedbackCtrl   = TextEditingController();
   final _actionPlanCtrl = TextEditingController();
-  // GoalAchievement por índice (paralelo a eval.goals)
   final List<GoalAchievement?> _goalAchievements = [];
   bool _initialized = false;
   bool _saving = false;
@@ -43,35 +41,31 @@ class _SelfEvaluationPageState extends ConsumerState<SelfEvaluationPage> {
     super.dispose();
   }
 
+  /// Inicializa scores e campos de texto a partir da avaliação salva.
+  /// Apenas critérios presentes no criteriaMap (ativos no ciclo) são inicializados.
+  /// Critérios ausentes no mapa não são exibidos nem contabilizados.
   void _tryInitialize(
-    Map<CriterionType, List<Criterion>>? criteria,
+    Map<String, String> criteriaMap,
     AutoEvaluation? eval,
   ) {
-    if (_initialized || criteria == null) return;
+    if (_initialized || criteriaMap.isEmpty) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _initialized) return;
       setState(() {
-        final allCriteria = [
-          ...criteria[CriterionType.behavioral] ?? [],
-          ...criteria[CriterionType.technical] ?? [],
-        ];
-        for (final c in allCriteria) {
-          _scores[c.id] = 5;
-        }
-
         if (eval != null) {
-          for (final t in eval.behavioralEvaluation) {
-            if (t.evaluation != null) _scores[t.criterionId] = t.evaluation!;
-          }
-          for (final t in eval.technicalEvaluation) {
-            if (t.evaluation != null) _scores[t.criterionId] = t.evaluation!;
+          // Carrega scores salvos dos grupos da avaliação
+          for (final group in eval.groups) {
+            for (final t in group.criteria) {
+              if (criteriaMap.containsKey(t.criterionId)) {
+                _scores[t.criterionId] = t.evaluation ?? 5;
+              }
+            }
           }
           _strengthsCtrl.text  = eval.strengths ?? '';
           _attentionCtrl.text  = eval.attentionPoints ?? '';
           _feedbackCtrl.text   = eval.feedback ?? '';
           _actionPlanCtrl.text = eval.actionPlan ?? '';
 
-          // Inicializa estado das metas
           _goalAchievements.clear();
           for (final g in eval.goals) {
             _goalAchievements.add(g.achieve);
@@ -82,24 +76,38 @@ class _SelfEvaluationPageState extends ConsumerState<SelfEvaluationPage> {
     });
   }
 
+  /// Proporção de critérios ativos preenchidos (score > 0).
   double get _completionRatio {
     if (_scores.isEmpty) return 0;
     final filled = _scores.values.where((s) => s > 0).length;
     return filled / _scores.length;
   }
 
-  List<TabEvaluation> _buildTabList(List<Criterion> criteria) => criteria
-      .map((c) => TabEvaluation(criterionId: c.id, evaluation: _scores[c.id]))
-      .toList();
+  /// Reconstrói a lista de TabEvaluation de um grupo a partir dos scores locais.
+  List<TabEvaluation> _rebuildGroup(
+    List<TabEvaluation> original,
+    Map<String, String> criteriaMap,
+  ) =>
+      original
+          .where((t) => criteriaMap.containsKey(t.criterionId))
+          .map((t) => TabEvaluation(
+                id: t.id,
+                criterionId: t.criterionId,
+                evaluation: _scores[t.criterionId],
+              ))
+          .toList();
 
   Future<void> _save({required bool finalize}) async {
-    final eval     = ref.read(myAutoEvaluationProvider).valueOrNull;
-    final criteria = ref.read(cycleCriteriaProvider).valueOrNull;
-    if (eval == null || criteria == null || _saving) return;
+    final eval      = ref.read(myAutoEvaluationProvider).valueOrNull;
+    final rawCriteria = ref.read(cycleCriteriaProvider).valueOrNull;
+    if (eval == null || rawCriteria == null || _saving) return;
+
+    final criteriaMap = {
+      for (final c in rawCriteria.values.expand((l) => l)) c.id: c.name,
+    };
 
     setState(() => _saving = true);
     try {
-      // Reconstrói goals com os achievements atualizados
       final updatedGoals = <TabGoal>[];
       for (var i = 0; i < eval.goals.length; i++) {
         final original = eval.goals[i];
@@ -116,8 +124,14 @@ class _SelfEvaluationPageState extends ConsumerState<SelfEvaluationPage> {
         status:      finalize ? EvaluationStatus.finished : EvaluationStatus.onGoing,
         employeeId:  eval.employeeId,
         appraiserId: eval.appraiserId,
-        behavioralEvaluation: _buildTabList(criteria[CriterionType.behavioral] ?? []),
-        technicalEvaluation:  _buildTabList(criteria[CriterionType.technical] ?? []),
+        tytleGroup1: eval.tytleGroup1,
+        group1:      _rebuildGroup(eval.group1, criteriaMap),
+        tytleGroup2: eval.tytleGroup2,
+        group2:      _rebuildGroup(eval.group2, criteriaMap),
+        tytleGroup3: eval.tytleGroup3,
+        group3:      eval.group3 != null ? _rebuildGroup(eval.group3!, criteriaMap) : null,
+        tytleGroup4: eval.tytleGroup4,
+        group4:      eval.group4 != null ? _rebuildGroup(eval.group4!, criteriaMap) : null,
         goals:           updatedGoals,
         strengths:       _strengthsCtrl.text.trim().isEmpty ? null : _strengthsCtrl.text.trim(),
         attentionPoints: _attentionCtrl.text.trim().isEmpty ? null : _attentionCtrl.text.trim(),
@@ -150,37 +164,36 @@ class _SelfEvaluationPageState extends ConsumerState<SelfEvaluationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final criteriaAsync   = ref.watch(cycleCriteriaProvider);
-    final myEvalAsync     = ref.watch(myAutoEvaluationProvider);
-    final byIdAsync       = ref.watch(autoEvaluationByIdProvider(widget.evalId ?? ''));
-    final evalAsync       = widget.evalId != null ? byIdAsync : myEvalAsync;
-    final resolvedAsync   = widget.evalId != null
+    final criteriaAsync = ref.watch(cycleCriteriaProvider);
+    final myEvalAsync   = ref.watch(myAutoEvaluationProvider);
+    final byIdAsync     = ref.watch(autoEvaluationByIdProvider(widget.evalId ?? ''));
+    final evalAsync     = widget.evalId != null ? byIdAsync : myEvalAsync;
+    final resolvedAsync = widget.evalId != null
         ? ref.watch(resolvedAutoEvalByIdProvider(widget.evalId!))
         : ref.watch(resolvedMyAutoEvalProvider);
 
-    criteriaAsync.whenData((criteria) {
-      evalAsync.whenData((eval) => _tryInitialize(criteria, eval));
+    // Mapa plano criterionId → nome (somente critérios ativos no ciclo)
+    final rawCriteria  = criteriaAsync.valueOrNull;
+    final criteriaMap  = rawCriteria == null
+        ? <String, String>{}
+        : {for (final c in rawCriteria.values.expand((l) => l)) c.id: c.name};
+
+    criteriaAsync.whenData((_) {
+      evalAsync.whenData((eval) => _tryInitialize(criteriaMap, eval));
     });
 
-    final currentUser = ref.watch(currentUserProvider);
-    final eval        = evalAsync.valueOrNull;
-    final isReadOnly  = eval?.isReadOnly ?? false;
-    final criteria    = criteriaAsync.valueOrNull;
-    final behavioral  = criteria?[CriterionType.behavioral] ?? [];
-    final technical   = criteria?[CriterionType.technical] ?? [];
-    final goals       = eval?.goals ?? [];
+    final currentUser  = ref.watch(currentUserProvider);
+    final eval         = evalAsync.valueOrNull;
+    final isReadOnly   = eval?.isReadOnly ?? false;
+    final goals        = eval?.goals ?? [];
 
-    final resolved    = resolvedAsync.valueOrNull;
+    final resolved     = resolvedAsync.valueOrNull;
     final displayModel = resolved != null
         ? EvaluationDisplayModel.fromResolvedAuto(
-            resolved,
-            currentUserName: currentUser?.name,
-          )
+            resolved, currentUserName: currentUser?.name)
         : (eval != null
             ? EvaluationDisplayModel.fromAutoEvaluation(
-                eval,
-                currentUserName: currentUser?.name,
-              )
+                eval, currentUserName: currentUser?.name)
             : null);
 
     return Scaffold(
@@ -202,9 +215,7 @@ class _SelfEvaluationPageState extends ConsumerState<SelfEvaluationPage> {
                 child: Text(
                   '${(_completionRatio * 100).round()}%',
                   style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white),
+                      fontSize: 11, fontWeight: FontWeight.w500, color: Colors.white),
                 ),
               ),
             ),
@@ -237,37 +248,28 @@ class _SelfEvaluationPageState extends ConsumerState<SelfEvaluationPage> {
                             'Preencha antes da reunião com seu gestor.',
                   ),
 
-                  // Critérios comportamentais
-                  if (behavioral.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    const _SectionLabel(label: 'Critérios comportamentais'),
-                    const SizedBox(height: 8),
-                    for (final c in behavioral) ...[
-                      _CriterionCard(
-                        name: c.name,
-                        score: (_scores[c.id] ?? 5).toDouble(),
-                        isReadOnly: isReadOnly,
-                        onChanged: (v) => setState(() => _scores[c.id] = v.round()),
-                      ),
-                      const SizedBox(height: 10),
+                  // Grupos dinâmicos de critérios
+                  if (eval != null)
+                    for (final group in eval.groups) ...[
+                      // Filtra apenas critérios ativos no ciclo
+                      if (group.criteria.any((t) => criteriaMap.containsKey(t.criterionId))) ...[
+                        const SizedBox(height: 16),
+                        _SectionLabel(label: group.displayTitle),
+                        const SizedBox(height: 8),
+                        for (final t in group.criteria) ...[
+                          if (criteriaMap.containsKey(t.criterionId)) ...[
+                            _CriterionCard(
+                              name: criteriaMap[t.criterionId]!,
+                              score: (_scores[t.criterionId] ?? 5).toDouble(),
+                              isReadOnly: isReadOnly,
+                              onChanged: (v) =>
+                                  setState(() => _scores[t.criterionId] = v.round()),
+                            ),
+                            const SizedBox(height: 10),
+                          ],
+                        ],
+                      ],
                     ],
-                  ],
-
-                  // Critérios técnicos
-                  if (technical.isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    const _SectionLabel(label: 'Critérios técnicos'),
-                    const SizedBox(height: 8),
-                    for (final c in technical) ...[
-                      _CriterionCard(
-                        name: c.name,
-                        score: (_scores[c.id] ?? 5).toDouble(),
-                        isReadOnly: isReadOnly,
-                        onChanged: (v) => setState(() => _scores[c.id] = v.round()),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                  ],
 
                   // Metas do período
                   if (goals.isNotEmpty) ...[
