@@ -499,6 +499,7 @@ class _EqualizationPageState extends ConsumerState<EqualizationPage> {
                       eval: e,
                       colaborador: colabors[e.employeeId],
                       careerLevel: perfilMap[e.employeeId]?.careerLevel ?? '',
+                      personTypeLabel: perfilMap[e.employeeId]?.personTypeLabel ?? 'Colaborador',
                       appraiserName: colabors[e.appraiserId]?.name.isNotEmpty == true
                           ? colabors[e.appraiserId]!.name
                           : e.appraiserName,
@@ -879,6 +880,7 @@ class _EmployeeCard extends ConsumerWidget {
   final LiderEvaluation eval;
   final ColaboradorDGT? colaborador;
   final String careerLevel;
+  final String personTypeLabel;
   final String appraiserName;
   final List<EvaluationGroup> groups;
   final EvaluationClassification? classification;
@@ -895,6 +897,7 @@ class _EmployeeCard extends ConsumerWidget {
     required this.eval,
     required this.colaborador,
     required this.careerLevel,
+    required this.personTypeLabel,
     required this.appraiserName,
     required this.groups,
     required this.classification,
@@ -941,11 +944,32 @@ class _EmployeeCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(name,
-                          style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textPrimary)),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(name,
+                                style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textPrimary)),
+                          ),
+                          if (personTypeLabel == 'Prestador') ...[
+                            const SizedBox(width: 5),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4A90D9).withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text('Prestador',
+                                  style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF4A90D9))),
+                            ),
+                          ],
+                        ],
+                      ),
                       if (level.isNotEmpty)
                         Text(level,
                             style: const TextStyle(

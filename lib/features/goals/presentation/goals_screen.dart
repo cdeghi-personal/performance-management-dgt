@@ -229,8 +229,8 @@ class _GoalsScreenState extends ConsumerState<GoalsScreen> {
                         const SizedBox(height: 12),
                         Text(
                           uniqueEmployees.isEmpty
-                              ? 'Nenhum colaborador encontrado.'
-                              : 'Selecione um colaborador acima.',
+                              ? 'Nenhum colaborador / prestador encontrado.'
+                              : 'Selecione um colaborador / prestador acima.',
                           style: const TextStyle(
                               fontSize: 14, color: AppColors.textSecondary),
                           textAlign: TextAlign.center,
@@ -490,7 +490,7 @@ class _EmployeeSelector extends StatelessWidget {
             Expanded(
               child: DropdownButton<String>(
                 value: safeValue,
-                hint: const Text('Selecionar colaborador',
+                hint: const Text('Selecionar Colaborador / Prestador',
                     style: TextStyle(
                         fontSize: 13, color: AppColors.textDisabled)),
                 isExpanded: true,

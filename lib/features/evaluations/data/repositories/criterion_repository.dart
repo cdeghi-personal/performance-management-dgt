@@ -12,6 +12,23 @@ class CriterionRepository {
   final SydleClient _client;
   CriterionRepository(this._client);
 
+  /// Busca nomes de critérios por IDs — usado em avaliações de prestadores
+  /// cujos critérios podem estar fora dos criteriaIds do ciclo.
+  Future<Map<String, String>> getNamesByIds(List<String> ids) async {
+    if (ids.isEmpty) return {};
+    final data = await _client.call(
+      SydlePackage.perfMngt,
+      SydleClass.criterion,
+      SydleMethod.search,
+      body: {
+        'query': {'ids': {'values': ids}},
+        'size': ids.length + 10,
+      },
+    ) as Map<String, dynamic>;
+    final response = SydleSearchResponse.fromJson(data, Criterion.fromJson);
+    return {for (final c in response.items) c.id: c.name};
+  }
+
   /// Busca critérios ativos filtrados pelos IDs do ciclo ativo.
   /// Retorna mapa indexado por CriterionType (suporta todos os 5 tipos).
   Future<Map<CriterionType, List<Criterion>>> getByCycle(

@@ -163,11 +163,11 @@ class AutoEvaluation {
       EvaluationGroup(title: tytleGroup1, criteria: group1),
       EvaluationGroup(title: tytleGroup2, criteria: group2),
     ];
-    if (tytleGroup3 != null && tytleGroup3!.isNotEmpty) {
-      result.add(EvaluationGroup(title: tytleGroup3!, criteria: group3 ?? []));
+    if (group3 != null && group3!.isNotEmpty) {
+      result.add(EvaluationGroup(title: tytleGroup3 ?? 'group3', criteria: group3!));
     }
-    if (tytleGroup4 != null && tytleGroup4!.isNotEmpty) {
-      result.add(EvaluationGroup(title: tytleGroup4!, criteria: group4 ?? []));
+    if (group4 != null && group4!.isNotEmpty) {
+      result.add(EvaluationGroup(title: tytleGroup4 ?? 'group4', criteria: group4!));
     }
     return result;
   }

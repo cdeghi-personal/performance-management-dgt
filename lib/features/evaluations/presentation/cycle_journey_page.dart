@@ -373,13 +373,13 @@ class _PhaseRow extends StatelessWidget {
       case PhaseIdentifier.started:
         return 'Ciclo aberto: RH definiu os critérios de avaliação e as expectativas por nível para este período.';
       case PhaseIdentifier.selfEvaluation:
-        return 'Cada colaborador avalia seus próprios critérios comportamentais e técnicos e registra pontos de desenvolvimento.';
+        return 'Cada colaborador / prestador avalia seus próprios critérios e registra pontos de desenvolvimento.';
       case PhaseIdentifier.evaluationMeeting:
         return 'Reunião da liderança para revisão conjunta de todas as avaliações do grupo, balizando os resultados por nível de carreira.';
       case PhaseIdentifier.leaderEvaluation:
-        return 'Gestor registra no app a nota de cada critério e seus comentários sobre o colaborador avaliado.';
+        return 'Gestor registra no app a nota de cada critério e seus comentários sobre o colaborador / prestador avaliado.';
       case PhaseIdentifier.results:
-        return 'Cada colaborador recebe o retorno oficial do seu resultado anual: classificação final, reajuste de mérito ou promoção.';
+        return 'Cada colaborador / prestador recebe o retorno oficial do seu resultado anual: classificação final, reajuste de mérito ou promoção.';
     }
   }
 

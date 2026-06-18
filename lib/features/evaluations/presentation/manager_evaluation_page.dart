@@ -7,6 +7,7 @@ import '../../../shared/widgets/dgt_app_bar.dart';
 import '../../../shared/widgets/read_only_banner.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../auth/domain/auth_provider.dart';
+import '../../profile/domain/profile_providers.dart';
 import '../data/models/auto_evaluation_model.dart';
 import '../data/models/cycle_model.dart';
 import '../data/models/lider_evaluation_model.dart';
@@ -55,43 +56,38 @@ class _ManagerEvaluationPageState extends ConsumerState<ManagerEvaluationPage> {
   }
 
   /// Inicializa scores e campos de texto a partir da avaliação salva.
-  /// Apenas critérios presentes em criteriaMap (ativos no ciclo) são inicializados.
-  void _tryInitialize(
-    Map<String, String> criteriaMap,
-    LiderEvaluation? eval,
-  ) {
-    if (_initialized || criteriaMap.isEmpty) return;
+  /// Todos os critérios com criterionId não-vazio são inicializados.
+  void _tryInitialize(Map<String, String> criteriaMap, LiderEvaluation? eval) {
+    if (_initialized || eval == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _initialized) return;
       setState(() {
-        if (eval != null) {
-          for (final group in eval.groups) {
-            for (final t in group.criteria) {
-              if (criteriaMap.containsKey(t.criterionId)) {
-                _scores[t.criterionId] = t.evaluation ?? 5;
-              }
+        for (final group in eval.groups) {
+          for (final t in group.criteria) {
+            if (t.criterionId.isNotEmpty) {
+              _scores[t.criterionId] = t.evaluation ?? 5;
             }
           }
-          _strengthsCtrl.text  = eval.strengths ?? '';
-          _attentionCtrl.text  = eval.attentionPoints ?? '';
-          _feedbackCtrl.text   = eval.feedback ?? '';
-          _actionPlanCtrl.text = eval.actionPlan ?? '';
-
-          _goalAchievements.clear();
-          for (final g in eval.goals) { _goalAchievements.add(g.achieve); }
-
-          for (final c in _nextGoalCtrls) { c.dispose(); }
-          _nextGoalCtrls.clear();
-          for (final g in eval.nextGoals) {
-            _nextGoalCtrls.add(TextEditingController(text: g));
-          }
-          if (_nextGoalCtrls.isEmpty) {
-            _nextGoalCtrls.add(TextEditingController());
-          }
-          _classification = eval.classification;
-          _topPerformer   = eval.topPerformer;
         }
-        _initialized = true;
+        _strengthsCtrl.text  = eval.strengths ?? '';
+        _attentionCtrl.text  = eval.attentionPoints ?? '';
+        _feedbackCtrl.text   = eval.feedback ?? '';
+        _actionPlanCtrl.text = eval.actionPlan ?? '';
+
+        _goalAchievements.clear();
+        for (final g in eval.goals) { _goalAchievements.add(g.achieve); }
+
+        for (final c in _nextGoalCtrls) { c.dispose(); }
+        _nextGoalCtrls.clear();
+        for (final g in eval.nextGoals) {
+          _nextGoalCtrls.add(TextEditingController(text: g));
+        }
+        if (_nextGoalCtrls.isEmpty) {
+          _nextGoalCtrls.add(TextEditingController());
+        }
+        _classification = eval.classification;
+        _topPerformer   = eval.topPerformer;
+        _initialized    = true;
       });
     });
   }
@@ -103,13 +99,11 @@ class _ManagerEvaluationPageState extends ConsumerState<ManagerEvaluationPage> {
         _scores.length;
   }
 
-  /// Reconstrói a lista de TabEvaluation de um grupo a partir dos scores locais.
-  List<TabEvaluation> _rebuildGroup(
-    List<TabEvaluation> original,
-    Map<String, String> criteriaMap,
-  ) =>
+  /// Reconstrói um grupo a partir dos scores locais — preserva todos os critérios
+  /// com criterionId não-vazio (independente de estarem no ciclo ativo).
+  List<TabEvaluation> _rebuildGroup(List<TabEvaluation> original) =>
       original
-          .where((t) => criteriaMap.containsKey(t.criterionId))
+          .where((t) => t.criterionId.isNotEmpty)
           .map((t) => TabEvaluation(
                 id: t.id,
                 criterionId: t.criterionId,
@@ -118,13 +112,8 @@ class _ManagerEvaluationPageState extends ConsumerState<ManagerEvaluationPage> {
           .toList();
 
   Future<void> _save({required bool finalize}) async {
-    final eval        = ref.read(liderEvaluationForEmployeeProvider(widget.employeeId!)).valueOrNull;
-    final rawCriteria = ref.read(cycleCriteriaProvider).valueOrNull;
-    if (eval == null || rawCriteria == null || _saving) return;
-
-    final criteriaMap = {
-      for (final c in rawCriteria.values.expand((l) => l)) c.id: c.name,
-    };
+    final eval = ref.read(liderEvaluationForEmployeeProvider(widget.employeeId!)).valueOrNull;
+    if (eval == null || _saving) return;
 
     setState(() => _saving = true);
     try {
@@ -149,13 +138,13 @@ class _ManagerEvaluationPageState extends ConsumerState<ManagerEvaluationPage> {
         employeeId:  eval.employeeId,
         appraiserId: eval.appraiserId,
         tytleGroup1: eval.tytleGroup1,
-        group1:      _rebuildGroup(eval.group1, criteriaMap),
+        group1:      _rebuildGroup(eval.group1),
         tytleGroup2: eval.tytleGroup2,
-        group2:      _rebuildGroup(eval.group2, criteriaMap),
+        group2:      _rebuildGroup(eval.group2),
         tytleGroup3: eval.tytleGroup3,
-        group3:      eval.group3 != null ? _rebuildGroup(eval.group3!, criteriaMap) : null,
+        group3:      eval.group3 != null ? _rebuildGroup(eval.group3!) : null,
         tytleGroup4: eval.tytleGroup4,
-        group4:      eval.group4 != null ? _rebuildGroup(eval.group4!, criteriaMap) : null,
+        group4:      eval.group4 != null ? _rebuildGroup(eval.group4!) : null,
         goals:           updatedGoals,
         strengths:       _strengthsCtrl.text.trim().isEmpty ? null : _strengthsCtrl.text.trim(),
         attentionPoints: _attentionCtrl.text.trim().isEmpty ? null : _attentionCtrl.text.trim(),
@@ -187,12 +176,30 @@ class _ManagerEvaluationPageState extends ConsumerState<ManagerEvaluationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final criteriaAsync = ref.watch(cycleCriteriaProvider);
-    final evalAsync     = widget.evalId != null
+    final evalAsync = widget.evalId != null
         ? ref.watch(liderEvaluationByIdProvider(widget.evalId!))
         : ref.watch(liderEvaluationForEmployeeProvider(widget.employeeId!));
 
     final eval = evalAsync.valueOrNull;
+
+    // Mapa criterionId → nome buscado pelos IDs da própria avaliação
+    // (prestadores têm critérios fora do cycle.criteriaIds)
+    final evalCriteriaKey = eval == null ? '' : eval.groups
+        .expand((g) => g.criteria)
+        .map((t) => t.criterionId)
+        .where((id) => id.isNotEmpty)
+        .toSet()
+        .join(',');
+    final criteriaAsync  = ref.watch(criteriaByIdsProvider(evalCriteriaKey));
+    final criteriaMap    = criteriaAsync.valueOrNull ?? <String, String>{};
+
+    // Tipo de pessoa: Colaborador ou Prestador
+    final employeeId     = eval?.employeeId ?? '';
+    final perfilAsync    = ref.watch(employeeProfileByEmployeeIdProvider(employeeId));
+    final personTypeLabel = perfilAsync.valueOrNull?.personTypeLabel ?? 'Colaborador';
+
+    evalAsync.whenData((liderEval) => _tryInitialize(criteriaMap, liderEval));
+
     final autoEvalKey = (eval != null &&
             eval.employeeId.isNotEmpty &&
             eval.cycleId.isNotEmpty)
@@ -204,16 +211,6 @@ class _ManagerEvaluationPageState extends ConsumerState<ManagerEvaluationPage> {
         : ref.watch(resolvedLiderEvalForEmployeeProvider(widget.employeeId!));
     final cycleAsync = ref.watch(activeCycleProvider);
     final isManager  = ref.watch(isManagerProvider);
-
-    // Mapa plano criterionId → nome (somente critérios ativos no ciclo)
-    final rawCriteria = criteriaAsync.valueOrNull;
-    final criteriaMap = rawCriteria == null
-        ? <String, String>{}
-        : {for (final c in rawCriteria.values.expand((l) => l)) c.id: c.name};
-
-    criteriaAsync.whenData((_) {
-      evalAsync.whenData((liderEval) => _tryInitialize(criteriaMap, liderEval));
-    });
 
     final isReadOnly  = (widget.evalId != null) || (eval?.isReadOnly ?? false);
     final evalStatus  = eval?.status;
@@ -244,21 +241,22 @@ class _ManagerEvaluationPageState extends ConsumerState<ManagerEvaluationPage> {
           if (isReadOnly && evalStatus != null)
             ReadOnlyBanner(status: evalStatus),
           Expanded(
-            child: criteriaAsync.when(
+            child: evalAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Erro ao carregar critérios: $e')),
+              error: (e, _) => Center(child: Text('Erro ao carregar avaliação: $e')),
               data: (_) => ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
                   _ColaboradorCard(
                     name: eval?.employeeName.isNotEmpty == true
                         ? eval!.employeeName
-                        : 'Colaborador',
+                        : personTypeLabel,
+                    personTypeLabel: personTypeLabel,
                     subtitle: cycleLabel,
                   ),
                   const SizedBox(height: 16),
 
-                  const _SectionLabel(label: 'Auto-avaliação do colaborador'),
+                  _SectionLabel(label: 'Auto-avaliação do $personTypeLabel'),
                   const SizedBox(height: 8),
                   _SelfEvalCard(
                     expanded: _selfExpanded,
@@ -377,8 +375,13 @@ class _ManagerEvaluationPageState extends ConsumerState<ManagerEvaluationPage> {
 
 class _ColaboradorCard extends StatelessWidget {
   final String name;
+  final String personTypeLabel;
   final String subtitle;
-  const _ColaboradorCard({required this.name, required this.subtitle});
+  const _ColaboradorCard({
+    required this.name,
+    required this.personTypeLabel,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
@@ -399,8 +402,23 @@ class _ColaboradorCard extends StatelessWidget {
                       style: const TextStyle(
                           color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 2),
-                  Text(subtitle,
-                      style: const TextStyle(color: AppColors.lightGray, fontSize: 12)),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(personTypeLabel,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500)),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(subtitle,
+                          style: const TextStyle(color: AppColors.lightGray, fontSize: 12)),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -508,9 +526,8 @@ class _SelfEvalCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Critérios exibidos por grupo — apenas ativos no ciclo
                   for (final group in evalGroups) ...[
-                    if (group.criteria.any((t) => criteriaMap.containsKey(t.criterionId))) ...[
+                    if (group.criteria.any((t) => t.criterionId.isNotEmpty)) ...[
                       Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Text(
@@ -521,9 +538,9 @@ class _SelfEvalCard extends StatelessWidget {
                         ),
                       ),
                       for (final t in group.criteria)
-                        if (criteriaMap.containsKey(t.criterionId))
+                        if (t.criterionId.isNotEmpty)
                           _AutoRow(
-                            label: criteriaMap[t.criterionId]!,
+                            label: criteriaMap[t.criterionId] ?? t.criterionId,
                             score: scoreMap[t.criterionId]?.toDouble(),
                           ),
                       const SizedBox(height: 8),
@@ -659,9 +676,8 @@ class _ManagerScoresCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Grupos dinâmicos — apenas critérios ativos no ciclo
           for (final group in evalGroups) ...[
-            if (group.criteria.any((t) => criteriaMap.containsKey(t.criterionId))) ...[
+            if (group.criteria.any((t) => t.criterionId.isNotEmpty)) ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
@@ -672,10 +688,10 @@ class _ManagerScoresCard extends StatelessWidget {
                 ),
               ),
               for (var i = 0; i < group.criteria.length; i++) ...[
-                if (criteriaMap.containsKey(group.criteria[i].criterionId)) ...[
+                if (group.criteria[i].criterionId.isNotEmpty) ...[
                   if (i > 0) const Divider(height: 16),
                   _CriterionSlider(
-                    label:        criteriaMap[group.criteria[i].criterionId]!,
+                    label:        criteriaMap[group.criteria[i].criterionId] ?? group.criteria[i].criterionId,
                     selfRef:      (autoScoreMap[group.criteria[i].criterionId] ?? 0).toDouble(),
                     managerScore: (scores[group.criteria[i].criterionId] ?? 5).toDouble(),
                     isReadOnly:   isReadOnly,

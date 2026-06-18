@@ -179,6 +179,16 @@ final cycleCriteriaProvider = FutureProvider<Map<CriterionType, List<Criterion>>
   },
 );
 
+/// Busca nomes de critérios por lista de IDs (separados por vírgula).
+/// Usado em telas de avaliação individual para prestadores, cujos critérios
+/// podem estar fora dos criteriaIds do ciclo ativo.
+final criteriaByIdsProvider =
+    FutureProvider.family<Map<String, String>, String>((ref, idsKey) async {
+  if (idsKey.isEmpty) return {};
+  final ids = idsKey.split(',').where((id) => id.isNotEmpty).toList();
+  return ref.read(criterionRepositoryProvider).getNamesByIds(ids);
+});
+
 // ── Equalização ───────────────────────────────────────────────────────────────
 
 /// Todos os colaboradores DGT — usado pela GoalsScreen (HR) para listar todos.
