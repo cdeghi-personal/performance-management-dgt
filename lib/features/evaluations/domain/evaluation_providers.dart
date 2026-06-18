@@ -61,11 +61,31 @@ final pendingLiderEvaluationsProvider = FutureProvider<List<LiderEvaluation>>((r
 });
 
 /// Avaliações do gestor finalizadas onde o usuário logado é o AVALIADO.
-/// Somente status==finished aparece em "Minhas Avaliações" (regra de negócio).
+/// Regra de visibilidade: employees só veem avaliações do ciclo ativo quando a fase
+/// Resultados (PhaseIdentifier.results) estiver onGoing ou finished.
+/// Leaders e HR veem sempre. Ciclos históricos (cycleId != activeCycle.id) sempre visíveis.
 final myReceivedLiderEvaluationsProvider = FutureProvider<List<LiderEvaluation>>((ref) async {
-  final userId = ref.watch(currentUserIdProvider);
+  final userId  = ref.watch(currentUserIdProvider);
+  final profile = ref.watch(currentProfileProvider);
   if (userId == null) return [];
-  return ref.read(liderEvaluationRepositoryProvider).getFinishedByEmployee(userId);
+
+  final evals = await ref.read(liderEvaluationRepositoryProvider).getFinishedByEmployee(userId);
+
+  // Leaders e HR enxergam sempre
+  if (profile?.isHR == true || profile?.isLeader == true) return evals;
+
+  // Employees: gate pela fase Resultados do ciclo ativo
+  final cycle = await ref.watch(activeCycleProvider.future);
+  if (cycle == null) return evals;
+
+  final resultsVisible =
+      cycle.resultsPhase?.status == PhaseStatus.onGoing ||
+      cycle.resultsPhase?.status == PhaseStatus.finished;
+
+  return evals.where((e) {
+    if (e.cycleId == cycle.id) return resultsVisible;
+    return true; // ciclos anteriores sempre visíveis
+  }).toList();
 });
 
 /// Avaliações do time do gestor logado no ciclo ativo (todos os status) — tela de avaliações.

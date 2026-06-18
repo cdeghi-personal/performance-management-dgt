@@ -5,6 +5,7 @@ import '../../../core/utils/date_utils.dart' as du;
 import '../../../shared/widgets/dgt_app_bar.dart';
 import '../../../shared/widgets/status_badge.dart';
 import '../../auth/domain/auth_provider.dart';
+import '../data/models/cycle_model.dart';
 import '../data/models/lider_evaluation_model.dart';
 import '../domain/enrichment_providers.dart';
 import '../domain/evaluation_providers.dart';
@@ -21,6 +22,8 @@ class ReceivedEvaluationPage extends ConsumerWidget {
     final criteriaAsync = ref.watch(cycleCriteriaProvider);
     final currentUser   = ref.watch(currentUserProvider);
     final isManager     = ref.watch(isManagerProvider);
+    final activeCycle   = ref.watch(activeCycleProvider).valueOrNull;
+    final profile       = ref.watch(currentProfileProvider);
 
     final eval     = evalAsync.valueOrNull;
     final resolved = resolvedAsync.valueOrNull;
@@ -53,6 +56,47 @@ class ReceivedEvaluationPage extends ConsumerWidget {
               child: Text('Avaliação não encontrada.',
                   style: TextStyle(color: AppColors.textSecondary)),
             );
+          }
+
+          // Regra de visibilidade: employee só vê avaliação do ciclo ativo
+          // quando a fase Resultados estiver em andamento ou finalizada.
+          if (profile?.isEmployee == true && activeCycle != null && eval.cycleId == activeCycle.id) {
+            final resultsPhase = activeCycle.resultsPhase;
+            final visible = resultsPhase?.status == PhaseStatus.onGoing ||
+                resultsPhase?.status == PhaseStatus.finished;
+            if (!visible) {
+              return const Scaffold(
+                backgroundColor: AppColors.background,
+                body: Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.lock_outline_rounded,
+                            size: 52, color: AppColors.midGray),
+                        SizedBox(height: 16),
+                        Text(
+                          'Avaliação ainda não disponível',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textPrimary),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'O resultado da sua avaliação será liberado quando a etapa de Finalização do ciclo for iniciada.',
+                          style: TextStyle(
+                              fontSize: 13, color: AppColors.textSecondary),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }
           }
 
           final criteriaMap = <String, String>{};
