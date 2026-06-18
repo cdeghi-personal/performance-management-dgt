@@ -1,7 +1,7 @@
 name: performance_management_dgt
 description: App de Gestão de Desempenho DGT — ciclo de metas, avaliações, feedbacks e promoções.
 publish_to: 'none'
-version: 1.0.0+4
+version: 1.0.1+8
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
